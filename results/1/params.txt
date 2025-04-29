@@ -1,5 +1,6 @@
 TESTCOUNT = 5000
 K = 2
+length = 100000
 population_sizes = {
     "N1": 10000,  # European population
     "N2": N2,   # Neanderthal population, admixture time
