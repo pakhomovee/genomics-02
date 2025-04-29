@@ -1,0 +1,16 @@
+TESTCOUNT = 5000
+K = 2
+population_sizes = {
+    "N1": 10000,  # European population
+    "N2": N2,   # Neanderthal population, admixture time
+    "N3": 3400,   # Neanderthal population
+    "N4": 18500,  # Ancestral population
+    "N5": 10000,  # Ancestral population, long time ago
+}
+
+divergence_times = {
+    "N1": 1800,
+    "N2": 10000,
+    "N3": 18965,
+    "N4": 100000,
+}
