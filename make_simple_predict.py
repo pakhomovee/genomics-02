@@ -10,7 +10,7 @@ from scipy.optimize import dual_annealing
 import matplotlib.pyplot as plt
 
 # Define population sizes and divergence times
-mu = 1.2 * 10 ** -8
+mu = 2 * 1.2 * 10 ** -8
 
 from scipy.special import gammaincc, gammaln
 
@@ -62,7 +62,7 @@ def precise_estimate(population_sizes, divergence_times, count: int, length: int
     rate2 = coalescent_rate(population_sizes["N2"])
     rate3 = coalescent_rate(population_sizes["N3"])
     rate4 = coalescent_rate(population_sizes["N4"])
-    '''quotients = [
+    quotients = [
         1,
         np.exp(-rate1 * divergence_times["N1"]),
         np.exp(-rate1 * divergence_times["N1"]) *
@@ -70,22 +70,6 @@ def precise_estimate(population_sizes, divergence_times, count: int, length: int
         np.exp(-rate1 * divergence_times["N1"]) *
         np.exp(-rate2 * (divergence_times["N2"] - divergence_times["N1"])) *
         np.exp(-rate3 * (divergence_times["N3"] - divergence_times["N2"])),
-        np.exp(-rate1 * divergence_times["N1"]) *
-        np.exp(-rate2 * (divergence_times["N2"] - divergence_times["N1"])) *
-        np.exp(-rate3 * (divergence_times["N3"] - divergence_times["N2"])) *
-        np.exp(-rate4 * (divergence_times["N4"] - divergence_times["N3"]))
-    ]'''
-    quotients = [
-        1 - np.exp(-rate1 * divergence_times["N1"]),
-        np.exp(-rate1 * divergence_times["N1"]) *
-        (1 - np.exp(-rate2 * (divergence_times["N2"] - divergence_times["N1"]))),
-        np.exp(-rate1 * divergence_times["N1"]) *
-        np.exp(-rate2 * (divergence_times["N2"] - divergence_times["N1"])) *
-        (1 - np.exp(-rate3 * (divergence_times["N3"] - divergence_times["N2"]))),
-        np.exp(-rate1 * divergence_times["N1"]) *
-        np.exp(-rate2 * (divergence_times["N2"] - divergence_times["N1"])) *
-        np.exp(-rate3 * (divergence_times["N3"] - divergence_times["N2"])) *
-        (1 - np.exp(-rate4 * (divergence_times["N4"] - divergence_times["N3"]))),
         np.exp(-rate1 * divergence_times["N1"]) *
         np.exp(-rate2 * (divergence_times["N2"] - divergence_times["N1"])) *
         np.exp(-rate3 * (divergence_times["N3"] - divergence_times["N2"])) *
@@ -112,7 +96,7 @@ def precise_estimate(population_sizes, divergence_times, count: int, length: int
         return min(1, res * 1000)
     if normalization:
         res = normalize(res)
-    return res
+    return np.log(res)
 
 
 # Define the demographic model
@@ -128,20 +112,6 @@ def create_deme_graph(gen_population_sizes, gen_divergence_times):
     b.add_deme("N3", ancestors=["N4"], epochs=[dict(start_size=gen_population_sizes["N3"], end_time=gen_divergence_times["N2"], end_size=gen_population_sizes["N3"])])
     b.add_deme("N2", ancestors=["N3"], epochs=[dict(start_size=gen_population_sizes["N2"], end_time=gen_divergence_times["N1"], end_size=gen_population_sizes["N2"])])
     b.add_deme("N1", ancestors=["N2"], epochs=[dict(start_size=gen_population_sizes["N1"], end_time=0, end_size=gen_population_sizes["N1"])])
-
-    # EU
-
-    b.add_deme("WEU", ancestors=["N3"], epochs=[dict(start_size=5000, end_time=5000, end_size=5000)])
-    b.add_deme("EU_Bottleneck", ancestors=["WEU"], epochs=[dict(start_size=3000, end_time=1000, end_size=3000)])
-    b.add_deme("EEF", ancestors=["EU_Bottleneck"], epochs=[dict(start_size=5000, end_time=500, end_size=5000)])
-    b.add_deme("Steppe", ancestors=["EU_Bottleneck"], epochs=[dict(start_size=4000, end_time=500, end_size=4000)])
-    b.add_deme(
-        "EU",
-        ancestors=["EEF", "Steppe"],
-        start_time=500,
-        proportions=[0.65, 0.35],  # Example: 70% EEF, 30% Steppe ancestry
-        epochs=[dict(start_size=10000, end_time=0, end_size=10000)]
-    )
     # Build the graph
     graph = b.resolve()
     return graph
@@ -153,14 +123,13 @@ def convert_to_msprime(graph):
 
 # Simulate a genome for two European individuals
 def simulate_genome(demography, seed=42, k=2):
-    length = np.random.randint(30_000, 70_000)
+    length = 100_000
     ts = msprime.sim_ancestry(
-        samples=[msprime.SampleSet(k, ploidy=2, population="N1"),
-                 msprime.SampleSet(k, ploidy=2, population="EU")],  # Two individuals from the European population
+        samples=[msprime.SampleSet(k, ploidy=2, population="N1")],  # Two individuals from the European population
         demography=demography,
         sequence_length=length,  # Simulate a 100 Mb genome
         random_seed=seed,  # For reproducibility
-        recombination_rate=1e-8
+        #recombination_rate=1e-8
     )
     return ts
 
@@ -247,8 +216,8 @@ def generate_test(tp, gen_sizes, gen_times, k=2, seed=42):
 
 from concurrent.futures import ThreadPoolExecutor
 
-TESTCOUNT = 300
-K = 4
+TESTCOUNT = 5000
+K = 2
 
 def task(N2):
     population_sizes = {
@@ -261,7 +230,7 @@ def task(N2):
 
     divergence_times = {
         "N1": 1800,
-        "N2": 10000,
+        "N2": 5000,
         "N3": 18965,
         "N4": 100000,
     }
@@ -275,7 +244,7 @@ def task(N2):
 
     gen_divergence_times = {
         "N1": 1800,    # N1 diverged from N2 at 2000 generations ago
-        "N2": 10000,   # N2 diverged from N3 at 15000 generations ago
+        "N2": 5000,   # N2 diverged from N3 at 15000 generations ago
         "N3": 18965,   # N3 diverged from N4 at 50000 generations ago
         "N4": 100000,  # N4 diverged from N5 at 100000 generations ago
     }
@@ -284,11 +253,14 @@ def task(N2):
     for step in range(10):
         samples = []
         print("step #", step)
+        all = []
         for i in range(TESTCOUNT):
             samples.append([])
             test = generate_test(0, gen_population_sizes, gen_divergence_times, K, np.random.randint(1, 10000))
             for j in range(K * (K - 1) // 2):
                 samples[-1].append((test.diff[j], test.len))
+                all.append(test.diff[j])
+        
 
         def loss(params, samples):
             N2, N3 = params
@@ -302,20 +274,20 @@ def task(N2):
             return -total_log
         optimized_N2 = 100
         fine = np.inf
-        for N2_pred in range(100, 3000, 20):
+        for N2_pred in tqdm.tqdm(range(100, 4000, 20)):
             x = loss((N2_pred, N2_pred), samples)
             if fine > x:
                 #print(f"New opt: {N2}, fine: {x}, prev: {fine}")
                 fine = x
                 optimized_N2 = N2_pred
-        result.append(optimized_N2)
+        result.append(optimized_N2 // 2)
         #print(optimized_N2)
     avg = np.average(result)
     return (N2, result, avg, abs(N2 - avg) / N2)
 
 final_info = []
-with ThreadPoolExecutor(max_workers=8) as executor:
-    futures = [executor.submit(task, c) for c in [100, 300, 500, 700, 900, 1100, 1300, 1500, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400]]
+with ThreadPoolExecutor(max_workers=10) as executor:
+    futures = [executor.submit(task, c) for c in [i * 100 for i in range(1, 21, 2)]]
     for future in futures:
         final_info.append(future.result())
 for entry in final_info:
