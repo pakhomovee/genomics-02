@@ -1,16 +1,10 @@
-from concurrent.futures import ThreadPoolExecutor
+from pathos.multiprocessing import ProcessingPool
 from simulate import Simulator
 from model import Predictor
 import numpy as np
 import tqdm
+from params import GLOBAL_PARAMS
 
-GLOBAL_PARAMS = {
-            "mu": 2 * 1.2 * 10 ** -8,
-            "rr": 10 ** -8,
-            "TESTCOUNT": 50,
-            "K": 2,
-            "ploidy": 2
-        }
 
 class Tester:
     def __init__(self, PARAMS, workers=10):
@@ -30,7 +24,7 @@ class Tester:
 
             divergence_times = {
                 "N1": 1800,
-                "N2": 5000,
+                "N2": 10000,
                 "N3": 18965,
                 "N4": 100000,
             }
@@ -44,7 +38,7 @@ class Tester:
 
             gen_divergence_times = {
                 "N1": 1800,    # N1 diverged from N2 at 2000 generations ago
-                "N2": 5000,   # N2 diverged from N3 at 15000 generations ago
+                "N2": 10000,   # N2 diverged from N3 at 15000 generations ago
                 "N3": 18965,   # N3 diverged from N4 at 50000 generations ago
                 "N4": 100000,  # N4 diverged from N5 at 100000 generations ago
             }
@@ -53,7 +47,7 @@ class Tester:
             K = self.PARAMS["K"]
 
             result = []
-            for step in range(10):
+            for step in range(self.PARAMS["iters"]):
                 samples = []
                 print("step #", step)
                 all = []
@@ -77,26 +71,27 @@ class Tester:
                     return -total_log
                 optimized_N2 = 100
                 fine = np.inf
-                for N2_pred in tqdm.tqdm(range(100, 5000, 40)):
+                for N2_pred in tqdm.tqdm(range(self.PARAMS["start"], self.PARAMS["end"], self.PARAMS["step"])):
                     x = loss((N2_pred, N2_pred), samples)
                     if fine > x:
                         fine = x
                         optimized_N2 = N2_pred
-                result.append(optimized_N2 // 2)
+                result.append(optimized_N2)
             avg = np.average(result)
             return (N2, result, avg, abs(N2 - avg) / N2)
 
         final_info = []
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(task, c) for c in sizes]
-            for future in futures:
-                final_info.append(future.result())
-        f = open("runs/result.txt", "w")
+        with ProcessingPool(self.workers) as executor:
+            for i in range(0, len(sizes), self.workers):
+                results = executor.map(task, sizes[i:min(i+self.workers, len(sizes))])
+                final_info.extend(results)
+        f = open("runs/tmp.txt", "w")
         for entry in final_info:
             c, result, avg, s = entry
             f.write(f"N2={c}, predictions: {result}, average: {avg}, error: {abs(c - avg) / c}\n")
         f.close()
 
 
-tester = Tester(GLOBAL_PARAMS)
-tester.run([1500, 1700, 1900, 2100])
+if __name__ == "__main__":
+    tester = Tester(GLOBAL_PARAMS, 10)
+    tester.run([300, 500, 700, 900, 1100, 1300, 1500, 1700, 1900, 2100])

@@ -34,7 +34,7 @@ class Simulator:
         return demography
 
     def simulate_genome(self, demography, seed=42, k=2):
-        length = 100_000
+        length = self.PARAMS["length"]
         ts = msprime.sim_ancestry(
             samples=[msprime.SampleSet(k, ploidy=2, population="N1")],
             demography=demography,
