@@ -24,7 +24,7 @@ class Tester:
 
             divergence_times = {
                 "N1": 1800,
-                "N2": 10000,
+                "N2": 5000,
                 "N3": 18965,
                 "N4": 100000,
             }
@@ -38,7 +38,7 @@ class Tester:
 
             gen_divergence_times = {
                 "N1": 1800,    # N1 diverged from N2 at 2000 generations ago
-                "N2": 10000,   # N2 diverged from N3 at 15000 generations ago
+                "N2": 5000,   # N2 diverged from N3 at 15000 generations ago
                 "N3": 18965,   # N3 diverged from N4 at 50000 generations ago
                 "N4": 100000,  # N4 diverged from N5 at 100000 generations ago
             }

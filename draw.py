@@ -30,12 +30,11 @@ def draw(lines, mode):
             line = mem
             arr = eval(line[line.find('['):line.find(']')+1])
             if mode == 'all':
-                plt.scatter([N2] * len(arr), np.array(arr) * 2)
+                plt.scatter([N2] * len(arr), np.array(arr))
             Ns.append(N2)
             preds.append(np.average(arr))
-            print(abs(N2 - preds[-1] * 2) / N2)
     if mode == 'avg':
-        plt.scatter(Ns, np.array(preds) * 2)
+        plt.scatter(Ns, np.array(preds))
     plt.plot(Ns, Ns, color='r', alpha=0.5)
     plt.savefig(f'runs/{runId}/{mode}.png')
 
