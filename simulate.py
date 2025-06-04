@@ -78,17 +78,25 @@ class Simulator:
         res = []
         for i in range(k):
             for j in range(i+1, k):
+                site_positions = [site.position for site in ts.sites()]
+                sequence_length = ts.sequence_length
                 ind1_genotypes = genotype_matrix[:, i * 2 + x * k * 2]  # First individual
                 ind2_genotypes = genotype_matrix[:, j * 2 + x * k * 2]  # Second individual
-                differences = 0
-                for site_idx in range(ts.num_sites):
-                    ind1_alleles = ind1_genotypes[site_idx]
-                    ind2_alleles = ind2_genotypes[site_idx]
-                    # Check if the alleles differ
-                    if ind1_alleles != ind2_alleles:
-                        differences += 1
-                res.append(differences)
-
+                for start in range(0, int(sequence_length), self.PARAMS["window"]):
+                    end = start + self.PARAMS["window"]
+                    diff = 0
+                    
+                    # Find all sites that fall within this window
+                    window_sites = [idx for idx, pos in enumerate(site_positions) 
+                                if start <= pos < end]
+                    
+                    for site_idx in window_sites:
+                        ind1_alleles = ind1_genotypes[site_idx]
+                        ind2_alleles = ind2_genotypes[site_idx]
+                        if ind1_alleles != ind2_alleles:
+                            diff += 1
+                    
+                    res.append(diff)
         return res
 
     # Main workflow

@@ -8,5 +8,6 @@ GLOBAL_PARAMS = {
             "iters" : 5,
             "start": 100,
             "end" : 5000,
-            "step" : 10
+            "step" : 10,
+            "window": 1000,
         }
