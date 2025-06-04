@@ -97,6 +97,7 @@ class Simulator:
                             diff += 1
                     
                     res.append(diff)
+        #print(res)
         return res
 
     # Main workflow
@@ -117,4 +118,4 @@ class Simulator:
         # Compare the two individuals and count differences in overlapping segments
         differences = self.count_differences_in_overlapping_segments(mutated_ts, tp, k)
         length = mutated_ts.sequence_length
-        return Test(differences, length, self.calculate_t_mrca(ts, tp))
+        return Test(differences, self.PARAMS["window"], self.calculate_t_mrca(ts, tp))
