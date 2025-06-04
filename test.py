@@ -93,5 +93,5 @@ class Tester:
 
 
 if __name__ == "__main__":
-    tester = Tester(GLOBAL_PARAMS, 10)
-    tester.run([300, 500, 700, 900, 1100, 1300, 1500, 1700, 1900, 2100])
+    tester = Tester(GLOBAL_PARAMS, workers=7)
+    tester.run([900, 1100, 1300, 1500, 1700, 1900, 2100])

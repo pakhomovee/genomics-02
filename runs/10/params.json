@@ -1,0 +1,12 @@
+{
+  "mu": 2.4e-08,
+  "rr": 1e-08,
+  "TESTCOUNT": 5000,
+  "K": 2,
+  "length": 20000,
+  "ploidy": 2,
+  "iters": 5,
+  "start": 100,
+  "end": 5000,
+  "step": 10
+}

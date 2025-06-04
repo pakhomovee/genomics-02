@@ -20,6 +20,7 @@ f.close()
 with open(f"runs/{runId}/params.json", 'w') as f:
     json.dump(GLOBAL_PARAMS, f, indent=2)
 def draw(lines, mode):
+    fig, ax = plt.subplots()
     Ns = []
     preds = []
     for line in lines:
@@ -30,12 +31,13 @@ def draw(lines, mode):
             line = mem
             arr = eval(line[line.find('['):line.find(']')+1])
             if mode == 'all':
-                plt.scatter([N2] * len(arr), np.array(arr))
+                ax.scatter([N2] * len(arr), np.array(arr))
             Ns.append(N2)
             preds.append(np.average(arr))
     if mode == 'avg':
-        plt.scatter(Ns, np.array(preds))
-    plt.plot(Ns, Ns, color='r', alpha=0.5)
+        ax.scatter(Ns, np.array(preds))
+    ax.plot(Ns, Ns, color='r', alpha=0.5)
+    ax.set_box_aspect(1)
     plt.savefig(f'runs/{runId}/{mode}.png')
 
 draw(lines, 'avg')
