@@ -1,5 +1,6 @@
 from pathos.multiprocessing import ProcessingPool
 from simulate import Simulator
+from scipy.optimize import minimize, differential_evolution
 from model import Predictor
 import numpy as np
 import tqdm
@@ -54,14 +55,14 @@ class Tester:
                 for i in range(TESTCOUNT):
                     samples.append([])
                     test = self.simulator.generate_test(0, gen_population_sizes, gen_divergence_times, K, np.random.randint(1, 10000))
-                    for j in range(K * (K - 1) // 2):
+                    for j in range(len(test.diff)):
                         samples[-1].append((test.diff[j], test.len))
                         all.append(test.diff[j])
-                
 
                 def loss(params, samples):
-                    N2, N3 = params
-                    population_sizes["N2"] = N2
+                    N2, t2 = params
+                    population_sizes["N2"] = int(N2)
+                    divergence_times["N2"] = int(t2)
 
                     total_log = 0
                     for sample in samples:
@@ -69,14 +70,37 @@ class Tester:
                             p = self.predictor.precise_estimate(population_sizes, divergence_times, diff, len_, normalization=False)
                             total_log += p
                     return -total_log
-                optimized_N2 = 100
-                fine = np.inf
-                for N2_pred in tqdm.tqdm(range(self.PARAMS["start"], self.PARAMS["end"], self.PARAMS["step"])):
-                    x = loss((N2_pred, N2_pred), samples)
-                    if fine > x:
-                        fine = x
-                        optimized_N2 = N2_pred
-                result.append(optimized_N2)
+                initial_guess = [100, 2000]
+                bounds = [(100, 2500),  # x bounds
+                            (2000, 10000)]   # y bounds
+                #res = minimize(loss, initial_guess, args=samples, method='L-BFGS-B', bounds=bounds)
+                res = differential_evolution(loss, bounds, args=(samples,),
+                                            strategy='best1bin',
+                                            popsize=50,
+                                            mutation=(0.3, 1),
+                                            recombination=0.5,
+                                            tol=1e-8,            # Tighter tolerance
+                                            maxiter=2000,        # Increased maximum iterations
+                                            polish=True,         # Final local optimization
+                )
+                print(res.x)
+                def critical_area(params):
+                    # check if params are too close to borders
+                    if params[0] < bounds[0][0] + 100:
+                        return True
+                    if params[0] > bounds[0][1] - 100:
+                        return True
+                    if params[1] < bounds[1][0] + 1000:
+                        return True
+                    if params[1] > bounds[1][1] - 1000:
+                        return True
+                    return False
+
+                if critical_area(res):
+                    step -= 1
+                    print("REJECTING PREDICITON: ONE OF PARAMS IS CRITICAL")
+                    continue
+                result.append(res.x[0])
             avg = np.average(result)
             return (N2, result, avg, abs(N2 - avg) / N2)
 
@@ -94,4 +118,4 @@ class Tester:
 
 if __name__ == "__main__":
     tester = Tester(GLOBAL_PARAMS, workers=7)
-    tester.run([900, 1100, 1300, 1500, 1700, 1900, 2100])
+    tester.run([1000])
