@@ -54,7 +54,7 @@ class Tester:
                 for i in range(TESTCOUNT):
                     samples.append([])
                     test = self.simulator.generate_test(0, gen_population_sizes, gen_divergence_times, K, np.random.randint(1, 10000))
-                    for j in range(K * (K - 1) // 2):
+                    for j in range(len(test.diff)):
                         samples[-1].append((test.diff[j], test.len))
                         all.append(test.diff[j])
                 
